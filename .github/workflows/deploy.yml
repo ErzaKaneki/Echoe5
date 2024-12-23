@@ -1,0 +1,39 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - master  # Or your desired branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # SSH into the server and perform necessary actions
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v0.1.0
+        with:
+          host: ${{ secrets.SERVER_IP }}  # Your server's IP address
+          username: ${{ secrets.SERVER_USER }}  # The SSH username (e.g., ubuntu)
+          key: ${{ secrets.SERVER_SSH_KEY }}  # The private SSH key
+          port: 22  # The default SSH port, can be changed if needed
+          script: |
+            # Navigate to the project directory
+            cd /path/to/your/project/directory
+
+            # Pull the latest changes from Git
+            git pull origin main
+
+            # (Optional) Install dependencies, if needed
+            # npm install  # For Node.js, or pip install -r requirements.txt for Python apps
+
+            # Restart the service (modify as needed based on your stack)
+            sudo systemctl restart your-service  # Replace 'your-service' with the actual service name
+
+            # (Optional) Check for errors or output logs
+            # tail -n 10 /path/to/log/file.log  # If your application has a log file
