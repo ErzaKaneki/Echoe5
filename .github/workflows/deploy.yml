@@ -24,10 +24,9 @@ jobs:
           port: 22  # The default SSH port, can be changed if needed
           script: |
             # Navigate to the project directory
-            cd /path/to/your/project/directory
-
+            cd /echoe5
             # Pull the latest changes from Git
-            git pull origin main
+            git pull origin master
 
             # (Optional) Install dependencies, if needed
             # npm install  # For Node.js, or pip install -r requirements.txt for Python apps
