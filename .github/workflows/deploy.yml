@@ -35,7 +35,7 @@ jobs:
             pipinstall -r requirements.txt
 
             # Restart the service (modify as needed based on your stack)
-            sudo systemctl restart your-service  # Replace 'your-service' with the actual service name
+            sudo systemctl restart apache2  # Replace 'your-service' with the actual service name
 
             # (Optional) Check for errors or output logs
             # tail -n 10 /path/to/log/file.log  # If your application has a log file
