@@ -97,14 +97,6 @@ else:
     # Static files (CSS, JavaScript, Images)
     # https://docs.djangoproject.com/en/5.1/howto/static-files/
     STATIC_ROOT = BASE_DIR / "staticfiles"
-    
-    # AWS S3 settings
-    AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-    AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME')
-    AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    STATIC_URL =  f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 
     STORAGES = {
         "default": {
@@ -117,6 +109,14 @@ else:
             }
         },
     }
+    
+    # AWS S3 settings
+    AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+    AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME')
+    AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    STATIC_URL =  f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 
     AWS_S3_FILE_OVERWRITE = False
     AWS_DEFAULT_ACL = None

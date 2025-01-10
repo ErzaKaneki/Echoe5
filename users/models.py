@@ -6,7 +6,9 @@ from io import BytesIO
 import boto3
 from django.core.files.base import ContentFile
 from django.conf import settings
+import sys
 
+IS_DEVELOPMENT = 'dev' in sys.prefix.lower()
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -18,6 +20,8 @@ class Profile(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        img = None
+        buffer = None 
         if self.profile_picture:
             try:
                 # get the image from the profile_picture field
@@ -37,18 +41,27 @@ class Profile(models.Model):
                 # Create a new ContentFile
                 file_content = ContentFile(buffer.getvalue())
                 file_name = f'{self.user.username}_profile.jpg'
-
-                # Save the resized image to s3
-                s3 = boto3.client('s3')
-                bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-                s3.put_object(Bucket=bucket_name, Key=f'profile_pics/{file_name}', Body=file_content)
+                
+                if IS_DEVELOPMENT:
+                    # Save the resized image to the local storage
+                    default_storage.save(f'media/profile_pics/{file_name}', file_content)
+                else:
+                    # Save the resized image to s3
+                    s3 = boto3.client('s3')
+                    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+                    s3.put_object(Bucket=bucket_name, Key=f'profile_pics/{file_name}', Body=file_content)
 
                 # Update the profile picture field to the point to S3 URL
                 self.profile_picture = f'profile_pics/{file_name}'
+                
+            except FileNotFoundError:
+                pass
 
             finally:
-                img.close()
-                buffer.close()
+                if img:
+                    img.close()
+                if buffer:
+                    buffer.close()
 
         super().save(*args, **kwargs)
 
