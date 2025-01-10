@@ -1,4 +1,4 @@
-#!G:\Users\nevin\vsCode\Echoe5\venv\Scripts\python.exe
+#!G:\Users\nevin\vsCode\Echoe5\dev\Scripts\python.exe
 
 import sys
 import json
