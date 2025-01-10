@@ -1,0 +1,7 @@
+{% extends "blog/base.html" %}
+{% block content %}
+	<div class="content-section">
+		<h2>Server Error</h2>
+		<p>Sorry, somthing went wrong.  Please try again later.<p>
+	</div>
+{% endblock content %}

@@ -1,0 +1,45 @@
+# Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment directories
+venv/
+env/
+
+# IDE configuration files
+.idea/
+.vscode/
+
+# Environment variable files
+.env
+.env.dev
+
+# Database files
+*.sqlite3
+*.sqlite3-journal
+*.db
+
+# Media and static files (since you're using S3)
+media/
+staticfiles/
+
+# Log files
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+*.sql
+backup/
+backups/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.swp
+*.swo
+*~
