@@ -16,7 +16,7 @@ class RateLimitMiddleware:
             }
             return TemplateResponse(
                     request,
-                    'user/rate_limit_exceeded.html',
+                    'users/rate_limit_exceeded.html',
                     context,
                     status=429
             )

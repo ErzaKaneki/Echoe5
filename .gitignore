@@ -8,6 +8,9 @@ venv/
 env/
 dev/
 
+# Development and production environment files
+management/
+
 # IDE configuration files
 .idea/
 .vscode/

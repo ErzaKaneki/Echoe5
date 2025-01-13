@@ -42,6 +42,32 @@ if IS_DEVELOPMENT:
     CSRF_COOKIE_SECURE = False
     SECURE_HSTS_SECONDS = 0
     
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'file': {
+                'level': 'ERROR',
+                'class': 'logging.FileHandler',
+                'filename': BASE_DIR / 'logs/django.log',
+            },
+            'console': {
+                'class': 'logging.StreamHandler',
+                },
+        },
+        'root': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file', 'console'],
+                'level': 'ERROR',
+                'propagate': True,
+            }
+        }
+    }
+    
     # Use console email backend for development
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     
@@ -55,10 +81,43 @@ if IS_DEVELOPMENT:
     
     # Use local file storage instead of S3 in development
     STATIC_URL = '/static/'
+    STATICFILES_DIRS = [
+        BASE_DIR / 'blog' / 'static',
+    ]
+    #STATIC_ROOT = BASE_DIR / 'staticfiles'
+    
+    # Add this to your settings.py, right after your static files configuration
+
+    print("\nDjango Static Files Configuration:")
+    print(f"STATIC_URL: {STATIC_URL}")
+    print(f"STATICFILES_DIRS: {STATICFILES_DIRS}")
+    print(f"BASE_DIR: {BASE_DIR}")
+    print(f"Checking static files directory exists:")
+    for static_dir in STATICFILES_DIRS:
+        print(f"Directory {static_dir} exists: {os.path.exists(static_dir)}")
+        if os.path.exists(static_dir):
+            print("Contents:")
+            print(os.listdir(static_dir))
+    
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
     
+    # Default file storage
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    #STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
     
+    # Ensure media files are handled properly
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            #"OPTIONS": {
+            #    "location": BASE_DIR / "staticfiles"
+           # }
+        },
+    } 
 
 else:
     ALLOWED_HOSTS = ['www.echoe5.com', 'echoe5.com']
@@ -138,7 +197,12 @@ INSTALLED_APPS = [
     'crispy_bootstrap4',
     'crispy_forms',
     'storages',
+    'django_extensions',
 ]
+
+# Adding development-only apps
+if IS_DEVELOPMENT:
+    INSTALLED_APPS += ['management.apps.ManagementConfig'] # Custom management command for tree to function like Linux tree command
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -175,6 +239,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.static',
             ],
         },
     },
