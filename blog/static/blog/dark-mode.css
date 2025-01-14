@@ -111,7 +111,7 @@ label {
 
 /* Data-theme Light only options*/
 [data-theme="light"] body{
-    background: url(./images/light-background.jpg) !important;
+    background: url('./images/light-background.jpg') !important;
 }
 
 [data-theme="light"] body, [data-theme="dark"] body {
