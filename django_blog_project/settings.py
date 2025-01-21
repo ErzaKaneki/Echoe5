@@ -87,6 +87,11 @@ if IS_DEVELOPMENT:
     CSRF_COOKIE_SECURE = False
     SECURE_HSTS_SECONDS = 0
     
+    # Development Installed Apps
+    INSTALLED_APPS += [
+        'management.apps.ManagementConfig',
+    ]
+    
     # Development logging
     LOGGING = {
         'version': 1,
