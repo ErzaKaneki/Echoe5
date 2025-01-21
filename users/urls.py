@@ -50,5 +50,7 @@ urlpatterns = [
     path('2fa/verify/', user_views.verify_2fa, name='2fa-verify'),
     path('2fa/backup/', user_views.backup_code_verify, name='2fa-backup'),
     path('2fa/disable/', user_views.disable_2fa, name='2fa-disable'),
-    path('2fa/backup-codes/', user_views.BackupCodesView.as_view(), name='2fa-backup-codes'),
+    path('2fa/backup-codes/', user_views.BackupCodesView.as_view(), name='2fa-backup-codes'), 
+    path('verify-email/<str:uidb64>/<str:token>/', user_views.verify_email, name='verify_email'),
+    path('email-verification-sent/', user_views.email_verification_sent, name='email_verification_sent'),
 ]

@@ -111,6 +111,9 @@ if IS_DEVELOPMENT:
     CSRF_COOKIE_SECURE = False
     SECURE_HSTS_SECONDS = 0
     
+    # Email verification toggle for development
+    REQUIRE_EMAIL_VERIFICATION = False
+    
     # Development Installed Apps
     INSTALLED_APPS += [
         'management.apps.ManagementConfig',
@@ -142,7 +145,7 @@ if IS_DEVELOPMENT:
         }
     }
     
-    # Development email backend
+    # Development email backend prints to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     
     # Development database
@@ -184,6 +187,9 @@ else:
     SECURE_HSTS_PRELOAD = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    
+    # Email verification toggle for production
+    REQUIRE_EMAIL_VERIFICATION = True
     
     # Production database
     DATABASES = {

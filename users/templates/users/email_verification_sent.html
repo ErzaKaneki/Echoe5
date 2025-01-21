@@ -1,0 +1,15 @@
+{% extends "blog/base.html" %}
+{% block content %}
+    <div class="content-section">
+        <h2>Verify Your Email</h2>
+        <div class="alert alert-info">
+            <p>We've sent you an email with a verification link. Please check your inbox and spam folder.</p>
+            <p>Once you verify your email, you'll be able to log in.</p>
+        </div>
+        <div class="border-top pt-3">
+            <small class="text-muted">
+                <a href="{% url 'login' %}">Already verified? Login here</a>
+            </small>
+        </div>
+    </div>
+{% endblock %}

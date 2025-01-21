@@ -1,11 +1,15 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
+from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.db import transaction
+from django.conf import settings
+from django.views.decorators.http import require_GET
+from django.utils.translation import gettext as _
+
 from .forms import (
     UserRegisterForm,
     UserUpdateForm,
@@ -20,10 +24,8 @@ from .rate_limiting import (
     login_rate_limit
 )
 from .decorators import check_account_lockout, require_2fa
-import qrcode
-import qrcode.image.svg
-from io import BytesIO
-import base64
+from .email_verification import EmailVerification
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -86,23 +88,43 @@ class RateLimitedLoginView(LoginView):
 
 @registration_rate_limit()
 def register(request):
-    """User registration with security features"""
+    """User registration with email verification"""
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
             try:
                 with transaction.atomic():
                     user = form.save(commit=False)
-                    user.is_active = False  # Require email verification
+                    
+                    # Set active status based on environment
+                    user.is_active = not settings.REQUIRE_EMAIL_VERIFICATION
                     user.save()
                     
-                    messages.success(
-                        request,
-                        'Account created! Please check your email to verify your account.'
-                    )
-                    logger.info(f"Successfully registered user: {user.username}")
-                    return redirect('login')
-                    
+                    if settings.REQUIRE_EMAIL_VERIFICATION:
+                        # Send verification email in production
+                        if EmailVerification.send_verification_email(request, user):
+                            messages.info(
+                                request,
+                                'Please check your email to verify your account before logging in.'
+                            )
+                            logger.info(f"User registered with email verification: {user.username}")
+                            return redirect('email_verification_sent')
+                        else:
+                            messages.error(
+                                request,
+                                'Failed to send verification email. Please try again.'
+                            )
+                            user.delete()
+                            return redirect('register')
+                    else:
+                        # Direct login in development
+                        messages.success(
+                            request,
+                            'Your account has been created! You can now log in.'
+                        )
+                        logger.info(f"User registered without verification: {user.username}")
+                        return redirect('login')
+                        
             except Exception as e:
                 logger.error(f"Registration error: {str(e)}")
                 messages.error(
@@ -148,6 +170,26 @@ def profile(request):
     }
     return render(request, 'users/profile.html', context)
 
+@require_GET
+def verify_email(request, uidb64, token):
+    """Handle email verification"""
+    success, user = EmailVerification.verify_token(uidb64, token)
+    
+    if success:
+        messages.success(request, 'Email verified successfully! You can now log in.')
+        return render(request, 'users/email_verification_confirm.html', {
+            'success': True
+        })
+    else:
+        return render(request, 'users/email_verification_confirm.html', {
+            'success': False,
+            'message': 'The verification link is invalid or has expired.'
+        })
+
+def email_verification_sent(request):
+    """Show email verification sent page"""
+    return render(request, 'users/email_verification_sent.html')
+
 @login_required
 def setup_2fa(request):
     """2FA setup with QR code generation"""
@@ -182,6 +224,11 @@ def setup_2fa(request):
         
         try:
             # Generate QR code
+            import qrcode
+            import qrcode.image.svg
+            from io import BytesIO
+            import base64
+            
             uri = security_profile.get_2fa_uri()
             img = qrcode.make(uri, image_factory=qrcode.image.svg.SvgImage)
             buffer = BytesIO()
