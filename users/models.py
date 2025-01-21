@@ -41,16 +41,16 @@ class Profile(models.Model):
                 file_name = f'{self.user.username}_profile.jpg'
 
                 if IS_DEVELOPMENT:
-                    # Save the resized image to the local storage
+                    # Save the resized image to the local storage - Note removed 'media/' prefix
                     file_like_object = io.BytesIO(file_content)
-                    default_storage.save(f'media/profile_pics/{file_name}', file_like_object )
+                    default_storage.save(f'profile_pics/{file_name}', file_like_object)
                 else:
                     # Save the resized image to s3
                     s3 = boto3.client('s3')
                     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
                     s3.put_object(Bucket=bucket_name, Key=f'profile_pics/{file_name}', Body=file_content)
 
-                # Update the profile picture field to point to the S3 URL
+                # Update the profile picture field
                 self.profile_picture = f'profile_pics/{file_name}'
 
             except FileNotFoundError:
