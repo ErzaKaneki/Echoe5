@@ -3,9 +3,10 @@ from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 from django.core.validators import MinLengthValidator
 from django.utils import timezone
-from PIL import Image
-import boto3
 from django.conf import settings
+from PIL import Image
+import secrets
+import boto3
 import io
 import os
 import sys
@@ -98,7 +99,19 @@ class Profile(models.Model):
 
 class UserSecurityProfile(models.Model):
     """Security profile for managing 2FA and account security settings"""
+    api_key = models.CharField(max_length=64, blank=True, null=True, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    
+    def generate_api_key(self):
+        """Generate a new API key for the user"""
+        try:
+            self.api_key = secrets.token_urlsafe(32)
+            self.save()
+            logger.info(f"Generated new API key for user {self.user.username}")
+            return self.api_key
+        except Exception as e:
+            logger.error(f"Error generating API key: {str(e)}")
+            raise
     
     # Two-Factor Authentication fields
     two_factor_secret = models.CharField(max_length=32, blank=True, null=True)
