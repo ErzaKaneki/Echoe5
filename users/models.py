@@ -29,41 +29,45 @@ class Profile(models.Model):
 
     def save(self, *args, **kwargs):
         """Save profile and process profile picture if it exists"""
-        super().save(*args, **kwargs)  # Save first to get file path
+        super().save(*args, **kwargs)
 
         if self.profile_picture:
             try:
-                # Open the image
-                img = Image.open(self.profile_picture)
-
-                # Process the image if needed
-                if img.height > 300 or img.width > 300:
-                    output_size = (300, 300)
-                    img.thumbnail(output_size)
-                    img.save(self.profile_picture.path)
-                    logger.info(f"Resized profile picture for user {self.user.username}")
+                if IS_DEVELOPMENT:
+                    # Local development handling
+                    with Image.open(self.profile_picture.path) as img:
+                        if img.height > 300 or img.width > 300:
+                            output_size = (300, 300)
+                            img.thumbnail(output_size)
+                            img.save(self.profile_picture.path)
+                            logger.info(f"Resized profile picture locally for user {self.user.username}")
+                else:
+                    # Production S3 handling
+                    s3_file = default_storage.open(self.profile_picture.name, 'rb')
+                    with Image.open(s3_file) as img:
+                        if img.height > 300 or img.width > 300:
+                            output_size = (300, 300)
+                            img.thumbnail(output_size)
+                            
+                            # Save the resized image to bytes buffer
+                            buffer = io.BytesIO()
+                            img.save(buffer, format=img.format)
+                            buffer.seek(0)
+                            
+                            # Upload resized image back to S3
+                            default_storage.save(self.profile_picture.name, buffer)
+                            logger.info(f"Resized and uploaded profile picture to S3 for user {self.user.username}")
+                    
+                    s3_file.close()
 
             except Exception as e:
-                logger.error(f"Error processing profile picture: {str(e)}")
-            finally:
-                if 'img' in locals():
-                    img.close()
+                logger.error(f"Error processing profile picture for user {self.user.username}: {str(e)}")
+
 
 class UserSecurityProfile(models.Model):
     """Security profile for managing 2FA and account security settings"""
-    api_key = models.CharField(max_length=64, blank=True, null=True, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    
-    def generate_api_key(self):
-        """Generate a new API key for the user"""
-        try:
-            self.api_key = secrets.token_urlsafe(32)
-            self.save()
-            logger.info(f"Generated new API key for user {self.user.username}")
-            return self.api_key
-        except Exception as e:
-            logger.error(f"Error generating API key: {str(e)}")
-            raise
+    api_key = models.CharField(max_length=64, blank=True, null=True, unique=True)
     
     # Two-Factor Authentication fields
     two_factor_secret = models.CharField(max_length=32, blank=True, null=True)
@@ -86,6 +90,17 @@ class UserSecurityProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Security Profile"
+
+    def generate_api_key(self):
+        """Generate a new API key for the user"""
+        try:
+            self.api_key = secrets.token_urlsafe(32)
+            self.save()
+            logger.info(f"Generated new API key for user {self.user.username}")
+            return self.api_key
+        except Exception as e:
+            logger.error(f"Error generating API key: {str(e)}")
+            raise
 
     def generate_2fa_secret(self):
         """Generate a new 2FA secret key"""

@@ -7,44 +7,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=User)
-def create_profile(sender, instance, created, **kwargs):
-    """Create a Profile for new users"""
+def create_user_profiles(sender, instance, created, **kwargs):
+    """Create both Profile and UserSecurityProfile for new users"""
     if created:
         try:
-            Profile.objects.create(user=instance, profile_picture='profile_pics/default.png')
-            logger.info(f"Created profile for user: {instance.username}")
+            # Create Profile
+            Profile.objects.get_or_create(
+                user=instance,
+                defaults={'profile_picture': 'profile_pics/default.jpg'}
+            )
+            logger.info(f"Created Profile for user {instance.username}")
+            
+            # Create UserSecurityProfile
+            UserSecurityProfile.objects.get_or_create(user=instance)
+            logger.info(f"Created UserSecurityProfile for user {instance.username}")
+            
         except Exception as e:
-            logger.error(f"Error creating profile for user {instance.username}: {str(e)}")
+            logger.error(f"Error creating profiles for user {instance.username}: {str(e)}")
             raise
 
 @receiver(post_save, sender=User)
-def save_profile(sender, instance, **kwargs):
-    """Save Profile changes"""
+def save_user_profiles(sender, instance, **kwargs):
+    """Save both profiles when user is saved"""
     try:
         instance.profile.save()
-        logger.info(f"Saved profile for user: {instance.username}")
+        instance.usersecurityprofile.save()
     except Exception as e:
-        logger.error(f"Error saving profile for user {instance.username}: {str(e)}")
-        raise
-
-@receiver(post_save, sender=User)
-def create_security_profile(sender, instance, created, **kwargs):
-    """Create a UserSecurityProfile for new users"""
-    if created:
-        try:
-            UserSecurityProfile.objects.create(user=instance)
-            logger.info(f"Created security profile for user: {instance.username}")
-        except Exception as e:
-            logger.error(f"Error creating security profile for user {instance.username}: {str(e)}")
-            raise
-
-@receiver(post_save, sender=User)
-def save_security_profile(sender, instance, **kwargs):
-    """Save UserSecurityProfile changes"""
-    try:
-        if hasattr(instance, 'usersecurityprofile'):
-            instance.usersecurityprofile.save()
-            logger.info(f"Saved security profile for user: {instance.username}")
-    except Exception as e:
-        logger.error(f"Error saving security profile for user {instance.username}: {str(e)}")
+        logger.error(f"Error saving profiles for user {instance.username}: {str(e)}")
         raise

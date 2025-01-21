@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth.views import LoginView
 from django.views.generic import TemplateView
+from django.db import transaction
 from .forms import (
     UserRegisterForm,
     UserUpdateForm,
@@ -52,51 +54,55 @@ class RateLimitedLoginView(LoginView):
         
         # Check if 2FA is required
         if security_profile.two_factor_enabled:
-            # Store partial login state in session
             self.request.session['partial_login_user_id'] = user.id
             return redirect('2fa-verify')
         
-        # Regular login if no 2FA
         return super().form_valid(form)
     
     def form_invalid(self, form):
         """Handle failed login attempt"""
-        username = form.cleaned_data.get('username')
         try:
-            user = User.objects.get(username=username)
-            security_profile = user.usersecurityprofile
-            security_profile.record_failed_login()
-            
-            if security_profile.is_account_locked():
-                messages.error(
-                    self.request,
-                    'Account temporarily locked due to multiple failed attempts.'
-                )
-        except User.DoesNotExist:
-            # Don't reveal whether a username exists
-            pass
+            username = form.cleaned_data.get('username') if form.cleaned_data else None
+            if username:
+                try:
+                    user = User.objects.get(username=username)
+                    security_profile = user.usersecurityprofile
+                    security_profile.record_failed_login()
+                    
+                    if security_profile.is_account_locked():
+                        messages.error(
+                            self.request,
+                            'Account temporarily locked due to multiple failed attempts.'
+                        )
+                        logger.warning(f"Account locked for user {username}")
+                except User.DoesNotExist:
+                    # Don't reveal whether username exists
+                    logger.info(f"Failed login attempt for non-existent user: {username}")
+                    pass
+        except Exception as e:
+            logger.error(f"Error in login attempt: {str(e)}")
             
         return super().form_invalid(form)
 
 @registration_rate_limit()
 def register(request):
-    """User registration with enhanced security"""
+    """User registration with security features"""
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
             try:
-                user = form.save(commit=False)
-                user.is_active = False  # Require email verification
-                user.save()
-                
-                # Create security profile
-                UserSecurityProfile.objects.create(user=user)
-                
-                messages.success(
-                    request,
-                    'Account created! Please check your email to verify your account.'
-                )
-                return redirect('login')
+                with transaction.atomic():
+                    user = form.save(commit=False)
+                    user.is_active = False  # Require email verification
+                    user.save()
+                    
+                    messages.success(
+                        request,
+                        'Account created! Please check your email to verify your account.'
+                    )
+                    logger.info(f"Successfully registered user: {user.username}")
+                    return redirect('login')
+                    
             except Exception as e:
                 logger.error(f"Registration error: {str(e)}")
                 messages.error(
@@ -105,6 +111,7 @@ def register(request):
                 )
     else:
         form = UserRegisterForm()
+    
     return render(request, 'users/register.html', {'form': form})
 
 @login_required
@@ -119,29 +126,26 @@ def profile(request):
             request.FILES,
             instance=request.user.profile
         )
-        
+
         if u_form.is_valid() and p_form.is_valid():
             try:
                 u_form.save()
-                p_form.save()
+                profile = p_form.save()
                 messages.success(request, 'Your account has been updated!')
+                logger.info(f"Profile updated for user {request.user.username}")
                 return redirect('profile')
             except Exception as e:
-                logger.error(f"Profile update error: {str(e)}")
-                messages.error(
-                    request,
-                    'An error occurred while updating your profile.'
-                )
+                logger.error(f"Profile update error for {request.user.username}: {str(e)}")
+                messages.error(request, 'Error updating profile. Please try again.')
     else:
         u_form = UserUpdateForm(instance=request.user)
         p_form = ProfileUpdateForm(instance=request.user.profile)
-    
+
     context = {
         'u_form': u_form,
         'p_form': p_form,
         'two_factor_enabled': request.user.usersecurityprofile.two_factor_enabled
     }
-    
     return render(request, 'users/profile.html', context)
 
 @login_required
@@ -149,31 +153,23 @@ def setup_2fa(request):
     """2FA setup with QR code generation"""
     security_profile = request.user.usersecurityprofile
     
-    # Redirect if 2FA is already enabled
+    # Redirect if 2FA already enabled
     if security_profile.two_factor_enabled:
         messages.info(request, '2FA is already enabled for your account.')
         return redirect('profile')
-    
+
     if request.method == 'POST':
         form = TwoFactorVerificationForm(request.POST)
         if form.is_valid():
             token = form.cleaned_data['token']
             
             if security_profile.verify_2fa_token(token):
-                # Generate backup codes
                 backup_codes = security_profile.generate_backup_codes()
-                
-                # Enable 2FA
                 security_profile.two_factor_enabled = True
                 security_profile.save()
                 
-                # Store backup codes in session for one-time display
                 request.session['backup_codes'] = backup_codes
-                
-                messages.success(
-                    request,
-                    '2FA has been successfully enabled for your account.'
-                )
+                messages.success(request, '2FA has been enabled for your account.')
                 return redirect('2fa-backup-codes')
             else:
                 messages.error(request, 'Invalid verification code.')
@@ -183,9 +179,9 @@ def setup_2fa(request):
         # Generate new secret if none exists
         if not security_profile.two_factor_secret:
             security_profile.generate_2fa_secret()
-            
-        # Generate QR code
+        
         try:
+            # Generate QR code
             uri = security_profile.get_2fa_uri()
             img = qrcode.make(uri, image_factory=qrcode.image.svg.SvgImage)
             buffer = BytesIO()
@@ -195,7 +191,7 @@ def setup_2fa(request):
             logger.error(f"QR code generation error: {str(e)}")
             messages.error(request, 'Error generating QR code.')
             return redirect('profile')
-    
+
     return render(request, 'users/2fa_setup.html', {
         'form': form,
         'qr_code': qr_code,
@@ -209,7 +205,7 @@ def verify_2fa(request):
     
     if not user_id:
         return redirect('login')
-    
+        
     if request.method == 'POST':
         form = TwoFactorVerificationForm(request.POST)
         if form.is_valid():
@@ -217,10 +213,8 @@ def verify_2fa(request):
             security_profile = request.user.usersecurityprofile
             
             if security_profile.verify_2fa_token(token):
-                # Complete login
                 request.session['2fa_verified'] = True
                 del request.session['partial_login_user_id']
-                
                 messages.success(request, 'Successfully verified!')
                 return redirect(request.GET.get('next', 'profile'))
             else:
@@ -248,14 +242,11 @@ def backup_code_verify(request):
             security_profile = request.user.usersecurityprofile
             
             if security_profile.verify_backup_code(code):
-                # Complete login
                 request.session['2fa_verified'] = True
                 del request.session['partial_login_user_id']
-                
                 messages.success(
                     request,
-                    'Successfully verified with backup code! ' 
-                    'Please generate new backup codes.'
+                    'Successfully verified with backup code! Please generate new backup codes.'
                 )
                 return redirect(request.GET.get('next', 'profile'))
             else:
@@ -273,10 +264,9 @@ class BackupCodesView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['backup_codes'] = self.request.session.get('backup_codes', [])
         
-        # Clear backup codes from session
         if 'backup_codes' in self.request.session:
             del self.request.session['backup_codes']
-            
+        
         return context
 
 @login_required
