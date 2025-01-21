@@ -1,0 +1,23 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+        <h2>Set Up Two-Factor Authentication</h2>
+        <p>1. Scan this QR code with your authenticator app:</p>
+        <img src="data:image/svg+xml;base64,{{ qr_code }}" alt="QR Code">
+        
+        <p>2. Or manually enter this secret key:</p>
+        <code>{{ secret }}</code>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Verify Setup</legend>
+                {{ form|crispy }}
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-info" type="submit">Verify and Enable 2FA</button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

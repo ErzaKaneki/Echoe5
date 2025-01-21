@@ -1,0 +1,18 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+        <h2>Two-Factor Authentication Required</h2>
+        <p>Please enter the verification code from your authenticator app.</p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                {{ form|crispy }}
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-info" type="submit">Verify</button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

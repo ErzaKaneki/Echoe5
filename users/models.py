@@ -1,16 +1,22 @@
 from django.db import models
-from django.core.files.storage import default_storage
 from django.contrib.auth.models import User
+from django.core.files.storage import default_storage
+from django.core.validators import MinLengthValidator
+from django.utils import timezone
 from PIL import Image
 import boto3
 from django.conf import settings
 import io
 import os
 import sys
+import pyotp
+import logging
 
+logger = logging.getLogger(__name__)
 IS_DEVELOPMENT = 'dev' in sys.prefix.lower()
 
 class Profile(models.Model):
+    """User profile for managing profile pictures and additional user information"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(
         default='profile_pics/default.png',
@@ -33,30 +39,55 @@ class Profile(models.Model):
                 # Convert the image to RGB
                 img = img.convert('RGB')
 
-                # Perform operations on the image
+                # Resize image if it's too large
+                output_size = (300, 300)
+                if img.height > 300 or img.width > 300:
+                    img.thumbnail(output_size)
+
+                # Prepare the image for saving
                 buffer = io.BytesIO()
                 img.save(buffer, format='JPEG')
                 buffer.seek(0)
                 file_content = buffer.getvalue()
                 file_name = f'{self.user.username}_profile.jpg'
 
+                # Save based on environment
                 if IS_DEVELOPMENT:
-                    # Save the resized image to the local storage - Note removed 'media/' prefix
+                    # Save to local storage
                     file_like_object = io.BytesIO(file_content)
-                    default_storage.save(f'profile_pics/{file_name}', file_like_object)
+                    default_storage.save(
+                        f'media/profile_pics/{file_name}',
+                        file_like_object
+                    )
                 else:
-                    # Save the resized image to s3
-                    s3 = boto3.client('s3')
-                    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-                    s3.put_object(Bucket=bucket_name, Key=f'profile_pics/{file_name}', Body=file_content)
+                    # Save to S3
+                    try:
+                        s3 = boto3.client('s3')
+                        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+                        s3.put_object(
+                            Bucket=bucket_name,
+                            Key=f'profile_pics/{file_name}',
+                            Body=file_content
+                        )
+                        logger.info(
+                            f"Successfully uploaded profile picture to S3 for user {self.user.username}"
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to upload profile picture to S3: {str(e)}",
+                            exc_info=True
+                        )
+                        raise
 
-                # Update the profile picture field
+                # Update the profile picture field to point to the new location
                 self.profile_picture = f'profile_pics/{file_name}'
 
-            except FileNotFoundError:
-                # Handle the error (e.g., log it, set a default image, etc.)
-                pass
-
+            except Exception as e:
+                logger.error(
+                    f"Error processing profile picture: {str(e)}",
+                    exc_info=True
+                )
+                raise
             finally:
                 if img:
                     img.close()
@@ -64,3 +95,145 @@ class Profile(models.Model):
                     buffer.close()
 
         super().save(*args, **kwargs)
+
+class UserSecurityProfile(models.Model):
+    """Security profile for managing 2FA and account security settings"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    
+    # Two-Factor Authentication fields
+    two_factor_secret = models.CharField(max_length=32, blank=True, null=True)
+    two_factor_enabled = models.BooleanField(default=False)
+    backup_codes = models.JSONField(default=list, blank=True)
+    
+    # Account security fields
+    failed_login_attempts = models.IntegerField(default=0)
+    last_failed_login = models.DateTimeField(null=True, blank=True)
+    account_locked_until = models.DateTimeField(null=True, blank=True)
+    password_last_changed = models.DateTimeField(auto_now_add=True)
+    
+    # Security preferences
+    require_password_change = models.BooleanField(default=False)
+    notify_on_login = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = "User Security Profile"
+        verbose_name_plural = "User Security Profiles"
+
+    def __str__(self):
+        return f"{self.user.username}'s Security Profile"
+
+    def generate_2fa_secret(self):
+        """Generate a new 2FA secret key"""
+        try:
+            self.two_factor_secret = pyotp.random_base32()
+            self.save()
+            logger.info(f"Generated new 2FA secret for user {self.user.username}")
+            return self.two_factor_secret
+        except Exception as e:
+            logger.error(f"Error generating 2FA secret: {str(e)}")
+            raise
+
+    def verify_2fa_token(self, token):
+        """Verify a 2FA token"""
+        if not self.two_factor_secret:
+            return False
+        try:
+            totp = pyotp.TOTP(self.two_factor_secret)
+            is_valid = totp.verify(token)
+            if is_valid:
+                logger.info(f"Successful 2FA verification for user {self.user.username}")
+            else:
+                logger.warning(f"Failed 2FA verification for user {self.user.username}")
+            return is_valid
+        except Exception as e:
+            logger.error(f"Error verifying 2FA token: {str(e)}")
+            return False
+
+    def get_2fa_uri(self):
+        """Get the URI for QR code generation"""
+        if not self.two_factor_secret:
+            return None
+        try:
+            totp = pyotp.TOTP(self.two_factor_secret)
+            return totp.provisioning_uri(
+                self.user.email,
+                issuer_name="Echoe5"
+            )
+        except Exception as e:
+            logger.error(f"Error generating 2FA URI: {str(e)}")
+            return None
+
+    def generate_backup_codes(self, count=8):
+        """Generate new backup codes for 2FA recovery"""
+        try:
+            codes = []
+            for _ in range(count):
+                code = pyotp.random_base32()[:8]
+                codes.append(code)
+            self.backup_codes = codes
+            self.save()
+            logger.info(f"Generated new backup codes for user {self.user.username}")
+            return codes
+        except Exception as e:
+            logger.error(f"Error generating backup codes: {str(e)}")
+            raise
+
+    def verify_backup_code(self, code):
+        """Verify and consume a backup code"""
+        try:
+            if code in self.backup_codes:
+                self.backup_codes.remove(code)
+                self.save()
+                logger.info(f"Backup code used for user {self.user.username}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Error verifying backup code: {str(e)}")
+            return False
+
+    def record_failed_login(self):
+        """Record a failed login attempt and handle account lockout"""
+        try:
+            self.failed_login_attempts += 1
+            self.last_failed_login = timezone.now()
+            
+            # Lock account after 5 failed attempts
+            if self.failed_login_attempts >= 5:
+                self.account_locked_until = timezone.now() + timezone.timedelta(minutes=30)
+                logger.warning(
+                    f"Account locked for user {self.user.username} due to multiple failed attempts"
+                )
+            
+            self.save()
+        except Exception as e:
+            logger.error(f"Error recording failed login: {str(e)}")
+            raise
+
+    def reset_login_attempts(self):
+        """Reset failed login attempts after successful login"""
+        try:
+            self.failed_login_attempts = 0
+            self.last_failed_login = None
+            self.account_locked_until = None
+            self.save()
+            logger.info(f"Reset login attempts for user {self.user.username}")
+        except Exception as e:
+            logger.error(f"Error resetting login attempts: {str(e)}")
+            raise
+
+    def is_account_locked(self):
+        """Check if the account is currently locked"""
+        if not self.account_locked_until:
+            return False
+        is_locked = timezone.now() < self.account_locked_until
+        if not is_locked:
+            # Reset if lock has expired
+            self.reset_login_attempts()
+        return is_locked
+
+    def should_change_password(self):
+        """Check if password change is required (e.g., every 90 days)"""
+        if self.require_password_change:
+            return True
+        days_since_change = (timezone.now() - self.password_last_changed).days
+        return days_since_change >= 90
