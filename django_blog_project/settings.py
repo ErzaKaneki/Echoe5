@@ -74,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'users.middleware.RateLimitMiddleware',
+    'blog.middleware.APISecurityHeadersMiddleware',
 ]
 
 ROOT_URLCONF = 'django_blog_project.urls'
