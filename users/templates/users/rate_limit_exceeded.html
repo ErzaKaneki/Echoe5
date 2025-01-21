@@ -1,11 +1,48 @@
 {% extends "blog/base.html" %}
 {% block content %}
 <div class="content-section">
-	<div class="alert alert-warning" role="alert">
-		<h4 class="alert-heading">{{ title }}</h4>
-		<p>{{ message }}</p>
-		<hr>
-		<p class="mb-0">Please wait {{ retry_after }} minutes before trying again.</p>
-	</div>
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Access Limited</h4>
+        <p>Too many attempts. Please wait {{ wait_time }} minutes before trying again.</p>
+        <hr>
+        <p class="mb-0">This limit helps protect our users and maintain service quality.</p>
+    </div>
+    <div class="border-top pt-3">
+        <small class="text-muted">
+            <a href="{% url 'blog-home' %}">Return to Home</a>
+        </small>
+    </div>
 </div>
+
+<style>
+    .alert-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.2);
+        color: #721c24;
+    }
+    
+    .alert-heading {
+        color: #721c24;
+        margin-bottom: 1rem;
+    }
+    
+    .content-section {
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    [data-theme="dark"] .content-section {
+        background: rgba(18, 18, 18, 0.95);
+    }
+    
+    [data-theme="dark"] .alert-danger {
+        background-color: rgba(220, 53, 69, 0.2);
+        border-color: rgba(220, 53, 69, 0.3);
+        color: #ff6b6b;
+    }
+    
+    [data-theme="dark"] .alert-heading {
+        color: #ff6b6b;
+    }
+</style>
 {% endblock content %}

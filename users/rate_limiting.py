@@ -9,7 +9,7 @@ import sys
 def rate_limit(key_prefix, limit=5, period=300):
     """
     Rate limiting decorator that limits views based on IP and optional user ID
-
+    
     Args:
         key_prefix (str): Identifier for the type of rate limit (e.g., 'login', 'post')
         limit (int): Number of allowed requests within the period
@@ -18,7 +18,7 @@ def rate_limit(key_prefix, limit=5, period=300):
     def decorator(view_func):
         @wraps(view_func)
         def wrapped_view(request, *args, **kwargs):
-            if not request.user.is_staff: # Staff bypass
+            if not request.user.is_staff:  # Staff bypass
                 # Get IP address with fall back
                 ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR'))
                 if ip and "," in ip:
@@ -37,11 +37,15 @@ def rate_limit(key_prefix, limit=5, period=300):
                 
                 # Check if limit is exceeded
                 if len(requests) >= limit:
+                    # Calculate wait time
+                    oldest_request = min(requests) if requests else now
+                    wait_time = int((oldest_request + period - now) / 60) + 1  # Convert to minutes and round up
+                    
                     return render(request, 'users/rate_limit_exceeded.html', {
-                        'limit': limit,
-                        'period_minutes': period // 60,
-                        'type': key_prefix
-                    })
+                        'wait_time': wait_time,
+                        'title': 'Rate Limit Exceeded',
+                        'message': f'You have exceeded the {key_prefix} attempt limit.'
+                    }, status=429)
 
                 # Add current request timestamp
                 requests.append(now)
