@@ -24,7 +24,7 @@ urlpatterns = [
     path('', include('blog.urls')), # This will include all those blog-specific URLs
     path('', include('users.urls')),  # This will include all those user-specific URLs
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
-    path('redoc/', schema_view.with_ui('redoc', cache_tiemout=0)),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0)),
 ]
 
 if settings.DEBUG:
