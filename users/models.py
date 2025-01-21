@@ -17,85 +17,37 @@ logger = logging.getLogger(__name__)
 IS_DEVELOPMENT = 'dev' in sys.prefix.lower()
 
 class Profile(models.Model):
-    """User profile for managing profile pictures and additional user information"""
+    """User profile model with auto-resizing profile picture"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(
-        default='profile_pics/default.png',
-        upload_to='profile_pics/',
-        blank=True,
-        null=True
+        default='profile_pics/default.jpg',
+        upload_to='profile_pics'
     )
-    
+
     def __str__(self):
         return f'{self.user.username} Profile'
 
     def save(self, *args, **kwargs):
-        img = None
-        buffer = None
+        """Save profile and process profile picture if it exists"""
+        super().save(*args, **kwargs)  # Save first to get file path
+
         if self.profile_picture:
             try:
-                # Open the image from the profile_picture field
+                # Open the image
                 img = Image.open(self.profile_picture)
 
-                # Convert the image to RGB
-                img = img.convert('RGB')
-
-                # Resize image if it's too large
-                output_size = (300, 300)
+                # Process the image if needed
                 if img.height > 300 or img.width > 300:
+                    output_size = (300, 300)
                     img.thumbnail(output_size)
-
-                # Prepare the image for saving
-                buffer = io.BytesIO()
-                img.save(buffer, format='JPEG')
-                buffer.seek(0)
-                file_content = buffer.getvalue()
-                file_name = f'{self.user.username}_profile.jpg'
-
-                # Save based on environment
-                if IS_DEVELOPMENT:
-                    # Save to local storage
-                    file_like_object = io.BytesIO(file_content)
-                    default_storage.save(
-                        f'media/profile_pics/{file_name}',
-                        file_like_object
-                    )
-                else:
-                    # Save to S3
-                    try:
-                        s3 = boto3.client('s3')
-                        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-                        s3.put_object(
-                            Bucket=bucket_name,
-                            Key=f'profile_pics/{file_name}',
-                            Body=file_content
-                        )
-                        logger.info(
-                            f"Successfully uploaded profile picture to S3 for user {self.user.username}"
-                        )
-                    except Exception as e:
-                        logger.error(
-                            f"Failed to upload profile picture to S3: {str(e)}",
-                            exc_info=True
-                        )
-                        raise
-
-                # Update the profile picture field to point to the new location
-                self.profile_picture = f'profile_pics/{file_name}'
+                    img.save(self.profile_picture.path)
+                    logger.info(f"Resized profile picture for user {self.user.username}")
 
             except Exception as e:
-                logger.error(
-                    f"Error processing profile picture: {str(e)}",
-                    exc_info=True
-                )
-                raise
+                logger.error(f"Error processing profile picture: {str(e)}")
             finally:
-                if img:
+                if 'img' in locals():
                     img.close()
-                if buffer:
-                    buffer.close()
-
-        super().save(*args, **kwargs)
 
 class UserSecurityProfile(models.Model):
     """Security profile for managing 2FA and account security settings"""

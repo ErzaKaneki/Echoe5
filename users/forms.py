@@ -20,63 +20,74 @@ class UserRegisterForm(UserCreationForm):
         """Validate password complexity requirements"""
         password = self.cleaned_data.get('password1')
         
+        if not password:
+            raise ValidationError('Password is required.')
+            
         # Length check
         if len(password) < 12:
-            raise ValidationError(
-                'Password must be at least 12 characters long.'
-            )
+            logger.warning("Password length requirement not met")
+            raise ValidationError('Password must be at least 12 characters long.')
             
         # Complexity requirements
         if not re.search(r'[A-Z]', password):
-            raise ValidationError(
-                'Password must contain at least one uppercase letter.'
-            )
+            logger.warning("Password uppercase requirement not met")
+            raise ValidationError('Password must contain at least one uppercase letter.')
         if not re.search(r'[a-z]', password):
-            raise ValidationError(
-                'Password must contain at least one lowercase letter.'
-            )
+            logger.warning("Password lowercase requirement not met")
+            raise ValidationError('Password must contain at least one lowercase letter.')
         if not re.search(r'[0-9]', password):
-            raise ValidationError(
-                'Password must contain at least one number.'
-            )
+            logger.warning("Password number requirement not met")
+            raise ValidationError('Password must contain at least one number.')
         if not re.search(r'[!@#$%^&*(),._?":{}|<>]', password):
-            raise ValidationError(
-                'Password must contain at least one special character.'
-            )
+            logger.warning("Password special character requirement not met")
+            raise ValidationError('Password must contain at least one special character.')
             
         # Check for common patterns
         common_patterns = [
             r'\b(123|321|abc|cba|password|qwerty|admin)\b',
-            self.cleaned_data.get('username', ''),
-            self.cleaned_data.get('email', '').split('@')[0]
         ]
+        
+        username = self.cleaned_data.get('username', '')
+        email = self.cleaned_data.get('email', '').split('@')[0] if self.cleaned_data.get('email') else ''
+        
+        if username:
+            common_patterns.append(re.escape(username))
+        if email:
+            common_patterns.append(re.escape(email))
         
         for pattern in common_patterns:
             if re.search(pattern, password.lower()):
-                raise ValidationError(
-                    'Password contains common patterns or personal information.'
-                )
+                logger.warning("Password contains common pattern or personal info")
+                raise ValidationError('Password contains common patterns or personal information.')
         
+        logger.info("Password complexity validation successful")
         return password
 
     def clean_email(self):
         """Validate email uniqueness and format"""
         email = self.cleaned_data.get('email')
         
+        if not email:
+            raise ValidationError('Email is required.')
+        
         # Check for existing email
         if User.objects.filter(email=email).exists():
+            logger.warning(f"Registration attempt with existing email: {email}")
             raise ValidationError('This email is already registered.')
         
         # Additional email validation
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            logger.warning(f"Invalid email format attempt: {email}")
             raise ValidationError('Please enter a valid email address.')
         
         # Check for disposable email providers
         disposable_domains = ['tempmail.com', 'throwaway.com']  # Add more as needed
         domain = email.split('@')[1]
         if domain in disposable_domains:
+            logger.warning(f"Registration attempt with disposable email domain: {domain}")
             raise ValidationError('Disposable email addresses are not allowed.')
         
+        logger.info(f"Email validation successful for: {email}")
         return email
 
 class UserUpdateForm(forms.ModelForm):
@@ -89,7 +100,6 @@ class UserUpdateForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Store original email for comparison
         if self.instance:
             self.original_email = self.instance.email
     
@@ -97,21 +107,28 @@ class UserUpdateForm(forms.ModelForm):
         """Validate email changes"""
         email = self.cleaned_data.get('email')
         
+        if not email:
+            raise ValidationError('Email is required.')
+        
         # Only check for uniqueness if email has changed
         if email != self.original_email:
             if User.objects.filter(email=email).exists():
+                logger.warning(f"Update attempt with existing email: {email}")
                 raise ValidationError('This email is already registered.')
                 
             # Additional email validation
             if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                logger.warning(f"Invalid email format in update: {email}")
                 raise ValidationError('Please enter a valid email address.')
             
             # Check for disposable email providers
             disposable_domains = ['tempmail.com', 'throwaway.com']
             domain = email.split('@')[1]
             if domain in disposable_domains:
+                logger.warning(f"Update attempt with disposable email domain: {domain}")
                 raise ValidationError('Disposable email addresses are not allowed.')
         
+        logger.info(f"Email update validation successful for: {email}")
         return email
 
 class ProfileUpdateForm(forms.ModelForm):
@@ -126,9 +143,7 @@ class ProfileUpdateForm(forms.ModelForm):
             'class': 'form-control',
             'accept': 'image/*'
         })
-        self.fields['profile_picture'].help_text = (
-            'Upload an image (max 5MB). Allowed formats: PNG, JPG, JPEG'
-        )
+        self.fields['profile_picture'].help_text = 'Upload an image (max 5MB). Allowed formats: PNG, JPG, JPEG'
     
     def clean_profile_picture(self):
         """Validate profile picture uploads"""
@@ -136,54 +151,17 @@ class ProfileUpdateForm(forms.ModelForm):
         if profile_picture:
             # Check file size
             if profile_picture.size > 5 * 1024 * 1024:  # 5MB limit
+                logger.warning(f"Profile picture upload exceeds size limit: {profile_picture.size} bytes")
                 raise ValidationError('Image file size must be less than 5MB.')
             
             # Check file type
             allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
             if profile_picture.content_type not in allowed_types:
-                raise ValidationError(
-                    'Only JPEG, JPG, and PNG files are allowed.'
-                )
-        
-        return profile_picture
-
-class EnhancedPasswordChangeForm(PasswordChangeForm):
-    """Enhanced password change form with additional validation"""
-    def clean_new_password1(self):
-        """Validate new password complexity"""
-        password = self.cleaned_data.get('new_password1')
-        
-        # Length check
-        if len(password) < 12:
-            raise ValidationError(
-                'Password must be at least 12 characters long.'
-            )
+                logger.warning(f"Invalid profile picture type attempted: {profile_picture.content_type}")
+                raise ValidationError('Only JPEG, JPG, and PNG files are allowed.')
             
-        # Complexity requirements
-        if not re.search(r'[A-Z]', password):
-            raise ValidationError(
-                'Password must contain at least one uppercase letter.'
-            )
-        if not re.search(r'[a-z]', password):
-            raise ValidationError(
-                'Password must contain at least one lowercase letter.'
-            )
-        if not re.search(r'[0-9]', password):
-            raise ValidationError(
-                'Password must contain at least one number.'
-            )
-        if not re.search(r'[!@#$%^&*(),_.?":{}|<>]', password):
-            raise ValidationError(
-                'Password must contain at least one special character.'
-            )
-        
-        # Check for similarity with old password
-        if self.user.check_password(password):
-            raise ValidationError(
-                'New password cannot be the same as your current password.'
-            )
-        
-        return password
+            logger.info("Profile picture validation successful")
+        return profile_picture
 
 class TwoFactorVerificationForm(forms.Form):
     """Form for 2FA token verification"""
@@ -203,8 +181,12 @@ class TwoFactorVerificationForm(forms.Form):
         """Validate 2FA token format"""
         token = self.cleaned_data.get('token')
         
+        if not token:
+            raise ValidationError('Token is required.')
+            
         # Check if token is numeric
         if not token.isdigit():
+            logger.warning("Invalid 2FA token format attempted")
             raise ValidationError('Token must contain only numbers.')
             
         return token
@@ -226,11 +208,13 @@ class TwoFactorBackupForm(forms.Form):
         """Validate backup code format"""
         code = self.cleaned_data.get('backup_code')
         
+        if not code:
+            raise ValidationError('Backup code is required.')
+            
         # Check if code contains valid characters
         if not re.match(r'^[A-Z2-7]+$', code):
-            raise ValidationError(
-                'Invalid backup code format.'
-            )
+            logger.warning("Invalid backup code format attempted")
+            raise ValidationError('Invalid backup code format.')
             
         return code
 
@@ -253,3 +237,38 @@ class SecurityPreferencesForm(forms.Form):
         ],
         label='Auto-logout after inactivity'
     )
+
+class EnhancedPasswordChangeForm(PasswordChangeForm):
+    """Enhanced password change form with additional validation"""
+    def clean_new_password1(self):
+        """Validate new password complexity"""
+        password = self.cleaned_data.get('new_password1')
+        
+        if not password:
+            raise ValidationError('New password is required.')
+            
+        # Length check
+        if len(password) < 12:
+            logger.warning("Password change length requirement not met")
+            raise ValidationError('Password must be at least 12 characters long.')
+            
+        # Complexity requirements
+        if not re.search(r'[A-Z]', password):
+            logger.warning("Password change uppercase requirement not met")
+            raise ValidationError('Password must contain at least one uppercase letter.')
+        if not re.search(r'[a-z]', password):
+            logger.warning("Password change lowercase requirement not met")
+            raise ValidationError('Password must contain at least one lowercase letter.')
+        if not re.search(r'[0-9]', password):
+            logger.warning("Password change number requirement not met")
+            raise ValidationError('Password must contain at least one number.')
+        if not re.search(r'[!@#$%^&*(),._?":{}|<>]', password):
+            logger.warning("Password change special character requirement not met")
+            raise ValidationError('Password must contain at least one special character.')
+        
+        # Check for similarity with old password
+        if self.user.check_password(password):
+            logger.warning("Password change attempted with same password")
+            raise ValidationError('New password cannot be the same as your current password.')
+        
+        return password
