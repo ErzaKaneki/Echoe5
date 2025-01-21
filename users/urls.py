@@ -46,6 +46,9 @@ urlpatterns = [
     path('password-reset-complete/',
          auth_views.PasswordResetCompleteView.as_view(template_name='users/password_reset_complete.html'),
          name='password_reset_complete'),
-    path('2fa/setup/', views.setup_2fa, name='2fa-setup'),
-    path('2fa/verify/', views.verify_2fa, name='2fa-verify'),
+     path('2fa/setup/', user_views.setup_2fa, name='2fa-setup'),
+    path('2fa/verify/', user_views.verify_2fa, name='2fa-verify'),
+    path('2fa/backup/', user_views.backup_code_verify, name='2fa-backup'),
+    path('2fa/disable/', user_views.disable_2fa, name='2fa-disable'),
+    path('2fa/backup-codes/', user_views.BackupCodesView.as_view(), name='2fa-backup-codes'),
 ]

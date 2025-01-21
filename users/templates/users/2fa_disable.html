@@ -1,0 +1,18 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section">
+        <h2>Disable Two-Factor Authentication</h2>
+        <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">Warning!</h4>
+            <p>Disabling two-factor authentication will make your account less secure. Are you sure you want to continue?</p>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <button class="btn btn-danger" type="submit">Yes, Disable 2FA</button>
+                <a class="btn btn-outline-secondary" href="{% url 'profile' %}">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

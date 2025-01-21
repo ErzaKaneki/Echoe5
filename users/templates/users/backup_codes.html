@@ -1,0 +1,44 @@
+{% extends "blog/base.html" %}
+{% block content %}
+    <div class="content-section">
+        <h2>Backup Codes</h2>
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">Important!</h4>
+            <p>Save these backup codes in a secure location. Each code can only be used once. They will not be shown again!</p>
+        </div>
+        <div class="backup-codes-container">
+            {% if backup_codes %}
+                <div class="row">
+                    {% for code in backup_codes %}
+                        <div class="col-md-6 mb-2">
+                            <code class="backup-code">{{ code }}</code>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'profile' %}" class="btn btn-success">I've Saved These Codes</a>
+                </div>
+            {% else %}
+                <p>No backup codes are currently available.</p>
+                <div class="mt-4">
+                    <a href="{% url 'profile' %}" class="btn btn-primary">Return to Profile</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <style>
+        .backup-codes-container {
+            margin-top: 20px;
+        }
+        .backup-code {
+            font-size: 1.2em;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            display: block;
+            text-align: center;
+        }
+    </style>
+{% endblock content %}
