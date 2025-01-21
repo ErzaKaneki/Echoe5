@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .api.v1 import views as api_views
+from .authentication import APIKeyAuthentication
 from .views import (
     PostListView,
     PostDetailView,
