@@ -53,19 +53,17 @@ def rate_limit(key_prefix, limit=5, period=300):
 
 # Specific rate limiters for different actions
 def login_rate_limit():
-    """5 login attempts per 5 minutes, 99 for Development"""
-    if 'dev' in sys.prefix.lower():
-        return rate_limit('login', limit=99, period=300)
+    """5 login attempts per 5 minutes"""
     return rate_limit('login', limit=5, period=300)
 
 def registration_rate_limit():
-    """3 registration attempts per hour per IP, 99 for Development"""
-    if 'dev' in sys.prefix.lower():
-        return rate_limit('registration', limit=99, period=3600)
+    """3 registration attempts per hour per IP"""
     return rate_limit('registration', limit=3, period=3600)
 
 def post_creation_rate_limit():
-    """10 posts per hour per user, 99 for Development"""
-    if 'dev' in sys.prefix.lower():
-        return rate_limit('post_creation', limit=99, period=3600)
+    """10 posts per hour per user"""
     return rate_limit('post_creation', limit=10, period=3600)
+
+def profile_update_rate_limit():
+    """20 profile updates per hour per user"""
+    return rate_limit('profile_update', limit=20, period=3600)
