@@ -57,8 +57,8 @@ def rate_limit(key_prefix, limit=5, period=300):
 
 # Specific rate limiters for different actions
 def login_rate_limit():
-    """5 login attempts per 5 minutes Changed to 50 for testing"""
-    return rate_limit('login', limit=50, period=300)
+    """5 login attempts per 5 minutes per IP"""
+    return rate_limit('login', limit=5, period=300)
 
 def registration_rate_limit():
     """3 registration attempts per hour per IP"""
