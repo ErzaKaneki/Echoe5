@@ -20,7 +20,7 @@ class Profile(models.Model):
     """User profile model with auto-resizing profile picture"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(
-        default='profile_pics/default.jpg',
+        default='profile_pics/default.png',
         upload_to='profile_pics'
     )
 
@@ -31,10 +31,11 @@ class Profile(models.Model):
         """Save profile and process profile picture if it exists"""
         super().save(*args, **kwargs)
 
-        if self.profile_picture:
+        if self.profile_picture and self.profile_picture.name != 'profile_pics/default.png':
             try:
                 if IS_DEVELOPMENT:
                     # Local development handling
+                    image_path = os.path.join(settings.MEDIA_ROOT, self.profile_picture.name)
                     with Image.open(self.profile_picture.path) as img:
                         if img.height > 300 or img.width > 300:
                             output_size = (300, 300)
