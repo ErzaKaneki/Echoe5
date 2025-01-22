@@ -3,6 +3,23 @@
 
 {% block content %}
 <div class="container">
+    <!-- Alert Messages -->
+    {% if messages %}
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message|safe }}
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Hero Section -->
     <div class="row justify-content-center">
         <div class="col-md-6 text-center mb-5">
             <h1 class="display-4">Welcome to Echoe5</h1>
@@ -10,78 +27,202 @@
         </div>
     </div>
     
+    <!-- Auth Card -->
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="card shadow-sm">
                 <div class="card-body">
+                    <!-- Auth Tabs -->
                     <ul class="nav nav-tabs mb-4" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" data-toggle="tab" href="#login">Login</a>
+                            <a class="nav-link {% if not register_form.errors %}active{% endif %}" 
+                               data-toggle="tab" 
+                               href="#login" 
+                               role="tab">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" data-toggle="tab" href="#register">Register</a>
+                            <a class="nav-link {% if register_form.errors %}active{% endif %}" 
+                               data-toggle="tab" 
+                               href="#register" 
+                               role="tab">Register</a>
                         </li>
                     </ul>
 
                     <div class="tab-content">
                         <!-- Login Tab -->
-                        <div id="login" class="tab-pane active">
-                            <form method="POST" action="{% url 'login' %}">
+                        <div id="login" class="tab-pane {% if not register_form.errors %}active{% endif %}">
+                            <form method="POST" action="{% url 'login' %}" class="needs-validation" novalidate>
                                 {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ next }}">
+                                
                                 <div class="form-group">
-                                    <input type="text" name="username" class="form-control" placeholder="Username" required>
+                                    <label for="login-username">Username</label>
+                                    <input type="text" 
+                                           name="username" 
+                                           id="login-username"
+                                           class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                                           placeholder="Enter username"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        {% for error in form.username.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
                                 </div>
+
                                 <div class="form-group">
-                                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                                    <label for="login-password">Password</label>
+                                    <input type="password" 
+                                           name="password" 
+                                           id="login-password"
+                                           class="form-control {% if form.password.errors %}is-invalid{% endif %}" 
+                                           placeholder="Enter password"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        {% for error in form.password.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
                                 </div>
+
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" 
+                                               class="custom-control-input" 
+                                               id="remember-me" 
+                                               name="remember">
+                                        <label class="custom-control-label" for="remember-me">Remember me</label>
+                                    </div>
+                                </div>
+
                                 <button type="submit" class="btn btn-primary btn-block">Login</button>
+                                
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'password_reset' %}" class="text-muted">Forgot password?</a>
+                                </div>
                             </form>
                         </div>
 
                         <!-- Register Tab -->
-                        <div id="register" class="tab-pane fade">
-                            <form method="POST" action="{% url 'register' %}">
+                        <div id="register" class="tab-pane {% if register_form.errors %}active{% endif %}">
+                            <form method="POST" action="{% url 'register' %}" class="needs-validation" novalidate>
                                 {% csrf_token %}
+                                
                                 <div class="form-group">
-                                    <input type="text" name="username" class="form-control" placeholder="Username" required>
+                                    <label for="register-username">Username</label>
+                                    <input type="text" 
+                                           name="username" 
+                                           id="register-username"
+                                           class="form-control {% if register_form.username.errors %}is-invalid{% endif %}" 
+                                           placeholder="Choose username"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        {% for error in register_form.username.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
                                 </div>
+
                                 <div class="form-group">
-                                    <input type="email" name="email" class="form-control" placeholder="Email" required>
+                                    <label for="register-email">Email</label>
+                                    <input type="email" 
+                                           name="email" 
+                                           id="register-email"
+                                           class="form-control {% if register_form.email.errors %}is-invalid{% endif %}" 
+                                           placeholder="Enter email"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        {% for error in register_form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        We'll never share your email with anyone else.
+                                    </small>
                                 </div>
+
                                 <div class="form-group">
-                                    <input type="password" name="password1" class="form-control" placeholder="Password" required>
+                                    <label for="register-password1">Password</label>
+                                    <input type="password" 
+                                           name="password1" 
+                                           id="register-password1"
+                                           class="form-control {% if register_form.password1.errors %}is-invalid{% endif %}" 
+                                           placeholder="Choose password"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        {% for error in register_form.password1.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Password must be at least 12 characters long and contain letters, numbers, and special characters.
+                                    </small>
                                 </div>
+
                                 <div class="form-group">
-                                    <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
+                                    <label for="register-password2">Confirm Password</label>
+                                    <input type="password" 
+                                           name="password2" 
+                                           id="register-password2"
+                                           class="form-control {% if register_form.password2.errors %}is-invalid{% endif %}" 
+                                           placeholder="Confirm password"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        {% for error in register_form.password2.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
                                 </div>
+
                                 <button type="submit" class="btn btn-primary btn-block">Register</button>
                             </form>
                         </div>
                     </div>
 
+                    <!-- Social Auth Section -->
                     <div class="social-auth mt-4">
-                        <p class="text-center">Or connect with</p>
+                        <div class="divider">
+                            <hr>
+                            <span>or</span>
+                            <hr>
+                        </div>
+
                         <div class="d-flex justify-content-center">
-                            <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-outline-dark">
-                                <i class="fab fa-google"></i> Google
+                            <a href="{% url 'social:begin' 'google-oauth2' %}" 
+                               class="btn btn-outline-dark"
+                               data-toggle="tooltip" 
+                               data-placement="top" 
+                               title="Sign in with Google">
+                                <i class="fab fa-google"></i> Continue with Google
                             </a>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Terms and Privacy -->
+            <div class="text-center mt-3 text-muted">
+                <small>
+                    By continuing, you agree to our 
+                    <a href="{% url 'terms' %}" class="text-muted">Terms of Service</a> and 
+                    <a href="{% url 'privacy' %}" class="text-muted">Privacy Policy</a>
+                </small>
             </div>
         </div>
     </div>
 </div>
 
 <style>
+/* Card Styling */
 [data-theme="light"] .card {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
 }
 
 [data-theme="dark"] .card {
-    background: rgba(18, 18, 18, 0.9);
+    background: rgba(18, 18, 18, 0.95);
 }
 
+/* Form Elements */
 .nav-tabs .nav-link {
     color: var(--text-primary);
 }
@@ -102,8 +243,21 @@
     background-color: transparent;
     border-color: var(--link-color);
     color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
+/* Custom Checkbox */
+.custom-control-label::before {
+    background-color: transparent;
+    border-color: var(--border-color);
+}
+
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+}
+
+/* Social Auth Button */
 .btn-outline-dark {
     border-color: var(--text-primary);
     color: var(--text-primary);
@@ -113,5 +267,83 @@
     background-color: var(--text-primary);
     color: var(--content-bg);
 }
+
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.divider hr {
+    flex: 1;
+    border-color: var(--border-color);
+}
+
+.divider span {
+    padding: 0 1rem;
+    color: var(--text-secondary);
+}
+
+/* Alert Styling */
+.alert {
+    background-color: transparent;
+    border-color: var(--border-color);
+}
+
+.alert-success {
+    color: #28a745;
+    border-color: #28a745;
+}
+
+.alert-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.alert-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+.alert-info {
+    color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2.5rem;
+    }
+}
 </style>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Initialize tooltips
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
 {% endblock %}

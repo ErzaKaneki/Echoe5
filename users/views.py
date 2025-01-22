@@ -13,7 +13,9 @@ from django.db import transaction
 from django.conf import settings
 from django.views.decorators.http import require_GET
 from django.utils.translation import gettext as _
-
+from django.views.decorators.http import require_http_methods
+from social_django.utils import load_strategy, load_backend
+from social_core.exceptions import AuthForbidden, AuthCanceled
 from .forms import (
     UserRegisterForm,
     UserUpdateForm,
@@ -340,3 +342,15 @@ def disable_2fa(request):
         return redirect('profile')
     
     return render(request, 'users/2fa_disable.html')
+
+@require_http_methods(["GET"])
+def handle_social_auth_error(request):
+    """Handle social authentication errors"""
+    strategy = load_strategy(request)
+    error = request.GET.get('error', None)
+    backend = request.GET.get('backend', None)
+    
+    if error:
+        messages.error(request, f'Authentication error: {error}')
+        logger.warning(f'Social auth error: {error} for backend {backend}')
+    return redirect('landing')

@@ -71,3 +71,7 @@ def post_creation_rate_limit():
 def profile_update_rate_limit():
     """20 profile updates per hour per user"""
     return rate_limit('profile_update', limit=20, period=3600)
+
+def social_auth_rate_limit():
+    """3 social auth attempts per 5 minutes"""
+    return rate_limit('social_auth', limit=3, period=300)

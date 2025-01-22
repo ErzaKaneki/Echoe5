@@ -99,6 +99,10 @@ TEMPLATES = [
     },
 ]
 
+# Social Auth Pipeline
+SOCIAL_AUTH_PIPELINE = ('users.pipeline.require_email_vlaidation',)
+
+# Wsgi
 WSGI_APPLICATION = 'django_blog_project.wsgi.application'
 
 # Development Settings
@@ -113,6 +117,9 @@ if IS_DEVELOPMENT:
     
     # Email verification toggle for development
     REQUIRE_EMAIL_VERIFICATION = False
+    
+    # Social Auth settings
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
     
     # Development Installed Apps
     INSTALLED_APPS += [
@@ -190,6 +197,12 @@ else:
     
     # Email verification toggle for production
     REQUIRE_EMAIL_VERIFICATION = True
+    
+    # Social Auth settings
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+    SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {'prompt': 'select_account'}
+    SOCIAL_AUTH_SANITIZE_REDIRECTS = True
+    SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ['echoe5.com', 'www.echoe5.com']
     
     # Production database
     DATABASES = {
