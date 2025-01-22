@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.views.generic import (
@@ -13,6 +13,19 @@ from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from users.rate_limiting import post_creation_rate_limit
 
+def landing_page(request):
+    if request.user.is_authenticated:
+        return redirect('blog-home')
+    return render(request, 'blog/landing_page.html', {
+        'title': 'Welcome',
+        'next': request.GET.get('next', '/')
+    })
+
+def terms(request):
+    return render(request, 'blog/terms.html', {'title': 'Terms of Service'})
+
+def privacy(request):
+    return render(request, 'blog/privacy.html', {'title': 'Privacy Policy'})
 
 def home(request):
     context = {

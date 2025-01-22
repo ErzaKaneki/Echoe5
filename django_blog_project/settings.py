@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'social_django',
 ]
 
 # Rest Framework settings
@@ -75,6 +76,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'users.middleware.RateLimitMiddleware',
     'blog.middleware.APISecurityHeadersMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'django_blog_project.urls'
@@ -94,6 +96,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.static',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -101,6 +105,34 @@ TEMPLATES = [
 
 # Social Auth Pipeline
 SOCIAL_AUTH_PIPELINE = ('users.pipeline.require_email_vlaidation',)
+
+# Social Auth settings
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_OAUTH2_KEY', default='')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_OAUTH2_SECRET', default='')
+
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/login/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'blog-home'
+SOCIAL_AUTH_RAISE_EXCEPTIONS = False
+
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {'prompt': 'select_account'}
+SOCIAL_AUTH_SANITIZE_REDIRECTS = True
+SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ['echoe5.com', 'www.echoe5.com']
+
+# Security settings for social auth
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
+SOCIAL_AUTH_SANITIZE_REDIRECTS = True
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = not IS_DEVELOPMENT
+
+
 
 # Wsgi
 WSGI_APPLICATION = 'django_blog_project.wsgi.application'
@@ -197,12 +229,6 @@ else:
     
     # Email verification toggle for production
     REQUIRE_EMAIL_VERIFICATION = True
-    
-    # Social Auth settings
-    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
-    SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {'prompt': 'select_account'}
-    SOCIAL_AUTH_SANITIZE_REDIRECTS = True
-    SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ['echoe5.com', 'www.echoe5.com']
     
     # Production database
     DATABASES = {

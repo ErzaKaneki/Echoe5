@@ -18,7 +18,9 @@ router = DefaultRouter()
 router.register(r'posts', api_views.PostViewSet)
 
 urlpatterns = [
-    path('', PostListView.as_view(), name = 'blog-home'),
+    path('', views.landing_page, name='landing-page'),
+    path('home/', views.home, name='blog-home'),
+    path('home/', PostListView.as_view(), name = 'blog-home'),
     path('user/<str:username>', UserPostListView.as_view(), name='user-posts'),
     path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
     path('post/new/', PostCreateView.as_view(), name='post-create'),
@@ -26,4 +28,6 @@ urlpatterns = [
     path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
     path('about/', views.about, name='blog-about'),
     path('api/v1/', include(router.urls)),
+    path('privacy/', views.privacy, name='privacy'),
+    path('terms/', views.terms, name='terms'),
 ]
