@@ -18,6 +18,7 @@ management/
 # Environment variable files
 .env
 .env.dev
+GoogleOauth.json
 
 # Database files
 *.sqlite3
