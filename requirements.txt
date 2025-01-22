@@ -30,6 +30,7 @@ pyotp==2.9.0
 PySocks==1.7.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
+python-jose==3.3.0
 pytz==2024.2
 qrcode==8.0
 requests==2.32.3
@@ -38,6 +39,7 @@ selenium==4.27.1
 setuptools==75.8.0
 six==1.16.0
 sniffio==1.3.1
+social-auth-app-django==5.4.2
 sortedcontainers==2.4.0
 soupsieve==2.6
 sqlparse==0.5.1

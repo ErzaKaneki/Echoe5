@@ -1,0 +1,120 @@
+{% extends "blog/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center mb-5">
+            <h1 class="display-4">Welcome to Echoe5</h1>
+            <p class="lead">Share your thoughts with the world</p>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-4" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-toggle="tab" href="#login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#register">Register</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Login Tab -->
+                        <div id="login" class="tab-pane active">
+                            <form method="POST" action="{% url 'login' %}">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <input type="text" name="username" class="form-control" placeholder="Username" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Login</button>
+                            </form>
+                        </div>
+
+                        <!-- Register Tab -->
+                        <div id="register" class="tab-pane fade">
+                            <form method="POST" action="{% url 'register' %}">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <input type="text" name="username" class="form-control" placeholder="Username" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="email" name="email" class="form-control" placeholder="Email" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" name="password1" class="form-control" placeholder="Password" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Register</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="social-auth mt-4">
+                        <p class="text-center">Or connect with</p>
+                        <div class="d-flex justify-content-center">
+                            <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-outline-dark mx-2">
+                                <i class="fab fa-google"></i> Google
+                            </a>
+                            <a href="{% url 'social:begin' 'apple-id' %}" class="btn btn-outline-dark mx-2">
+                                <i class="fab fa-apple"></i> Apple
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+[data-theme="light"] .card {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .card {
+    background: rgba(18, 18, 18, 0.9);
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-primary);
+}
+
+.nav-tabs .nav-link.active {
+    background-color: transparent;
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+.form-control {
+    background-color: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.form-control:focus {
+    background-color: transparent;
+    border-color: var(--link-color);
+    color: var(--text-primary);
+}
+
+.btn-outline-dark {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+.btn-outline-dark:hover {
+    background-color: var(--text-primary);
+    color: var(--content-bg);
+}
+</style>
+{% endblock %}
