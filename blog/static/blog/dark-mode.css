@@ -1,9 +1,9 @@
 [data-theme="light"] {
-    --content-bg: rgba(245, 245, 245, 0.4);
+    --content-bg: rgb(29, 27, 54);
     --text-primary: #000000;
     --text-secondary: #222222;
     --border-color: #e0e0e0;
-    --link-color: #0056b3;
+    --link-color: #000000;
     --nav-bg: rgba(52, 112, 163, 0.3);
     --heading-color: #444444;
     --hover-color: #428bca;
@@ -135,7 +135,7 @@ label {
 }
 
 [data-theme="light"] input[type="file"]::file-selector-button:hover {
-    background-color: #137885;
+    background-color: #00ffff;
     color: white;
 }
 
