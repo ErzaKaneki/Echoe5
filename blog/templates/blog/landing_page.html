@@ -9,16 +9,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="{% static 'blog/main.css' %}?v=1">
     <link rel="stylesheet" type="text/css" href="{% static 'blog/dark-mode.css' %}?v=1">
-    <title>Echoe5 - Welcome</title>
+    <title>Echoe5</title>
 </head>
 <body>
-    <div class="landing-container">
+    <div class="landing-container">        
         <div class="landing-content">
             <div class="brand-section">
-                <h1>Echoe5</h1>
-                <p>Connect. Share. Engage.</p>
+                <img src="static\blog\images\Logo.png" alt="Site logo E" class="brand-image">
+                <h1 style="font-family: 'Serif', Rockwell Extra Bold;">choe5</h1>
             </div>
-            
             <div class="auth-section">
                 <button onclick="toggleDarkMode()" class="dark-mode-toggle-landing">
                     <i id="dark-mode-icon" class="fas fa-moon"></i>
@@ -91,14 +90,26 @@
                         </div>
                     </div>
 
-                    <div class="social-auth-section">
-                        <p class="text-muted text-center">or</p>
-                        <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-outline-secondary btn-block">
-                            <i class="fab fa-google mr-2"></i>Continue with Google
-                        </a>
+                    <script src="https://accounts.google.com/gsi/client" async></script>
+                    <div id="g_id_onload"
+                        data-client_id=
+                        data-login_uri="https://your.domain/your_login_endpoint"
+                        data-auto_prompt="false">
+                        <script src=>"blog/static/blog/injectClientId.js"</script>
+                    </div>
+                    <div class="g_id_signin"
+                        data-type="standard"
+                        data-size="large"
+                        data-theme="outline"
+                        data-text="sign_in_with"
+                        data-shape="rectangular"
+                        data-logo_alignment="left">
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="motto-section">
+            <p style="font-family: 'Serif', Baskerville;">Share, Connect, Let your story Echo</p>
         </div>
     </div>
 
@@ -109,11 +120,14 @@
 
     <style>
         .landing-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
+            min-height: 80vh;
+            display: fit;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 1rem;
+            margin-top: 0rem;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .landing-content {
@@ -123,17 +137,46 @@
             margin: auto;
             gap: 4rem;
             align-items: center;
+            min-height: 500px;
+            overflow-x: hidden;
         }
 
         .brand-section {
+            display: flex;
+            text-align: right;
             flex: 1;
-            text-align: left;
         }
 
         .brand-section h1 {
-            font-size: 3.5rem;
+            font-size: 11rem;
+            font-style: italic;
             margin-bottom: 1rem;
-            color: var(--text-primary);
+            color: rgb(0, 140, 255);
+            text-shadow:
+                -5px 0px 5px rgb(1, 44, 123),
+                5px 0px 5px rgb(255, 255, 255),
+                0px 5px 5px rgb(0, 255, 255),
+                0px -5px 5px rgb(0, 255, 255);
+        }
+
+        .brand-image {
+            width: 25%;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+
+        .motto-section p {
+            font-size: 4rem;
+            font-style: italic;
+            margin-left: 13rem;
+            margin-bottom: 5rem;
+            color: rgb(8, 159, 252);
+            text-shadow:
+                -2px 0px 2px rgb(1, 44, 123),
+                2px 0px 2px rgb(255, 255, 255),
+                0px 2px 2px rgb(0, 255, 255),
+                0px -2px 2px rgb(0, 255, 255);
+            
         }
 
         .auth-section {
@@ -144,9 +187,10 @@
 
         .auth-container {
             background: var(--content-bg);
+            backdrop-filter: blur(10px);
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgba(221, 215, 215, 0.74);
         }
 
         .dark-mode-toggle-landing {
