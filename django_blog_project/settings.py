@@ -68,6 +68,7 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django_blog_project.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,7 +76,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'users.middleware.RateLimitMiddleware',
-    'blog.middleware.APISecurityHeadersMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
@@ -104,31 +104,45 @@ TEMPLATES = [
 ]
 
 # Social Auth Pipeline
-SOCIAL_AUTH_PIPELINE = ('users.pipeline.require_email_vlaidation',)
-
-# Social Auth settings
-AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth2',
-    'django.contrib.auth.backends.ModelBackend',
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
+    'social_core.pipeline.user.create_user',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+    'users.pipeline.require_email_valaidation',                        
 )
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_OAUTH2_KEY', default='')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_OAUTH2_SECRET', default='')
+# Social Auth settings
 
-SOCIAL_AUTH_LOGIN_ERROR_URL = '/login/'
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'blog-home'
-SOCIAL_AUTH_RAISE_EXCEPTIONS = False
 
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
-SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {'prompt': 'select_account'}
-SOCIAL_AUTH_SANITIZE_REDIRECTS = True
-SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ['echoe5.com', 'www.echoe5.com']
+# Social Auth Settings
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_OAUTH2_SECRET')
 
-# Security settings for social auth
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
 ]
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
+    'access_type': 'offline',
+    'prompt': 'select_account'
+}
+
+# Verify URLs match Google Console settings
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'blog-home'
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/landing_page/'
+
+# Security settings
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = not IS_DEVELOPMENT
+SOCIAL_AUTH_SANITIZE_REDIRECTS = True
+SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ['echoe5.com', 'www.echoe5.com', 'localhost', '127.0.0.1']
+
 SOCIAL_AUTH_SANITIZE_REDIRECTS = True
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = not IS_DEVELOPMENT
 
