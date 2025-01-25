@@ -64,7 +64,7 @@
                                 <button type="submit" class="btn btn-outline-info btn-block">Login</button>
                             </form>
                             <div class="text-center mt-3">
-                                <small><a href="{% url 'password_reset' %}">Forgot Password?</a></small>
+                                <small><a href="{% url 'password_reset' %}" class="forgot-password-link">Forgot Password?</a></small>
                             </div>
                         </div>
 
@@ -187,7 +187,7 @@
         }
 
         .auth-container {
-            background: var(--content-bg);
+            background: transparent;
             backdrop-filter: blur(10px);
             padding: 2rem;
             border-radius: 8px;
@@ -206,12 +206,12 @@
         }
 
         .nav-tabs .nav-link {
-            color: var(--text-primary);
+            color: rgb(0, 142, 164);
             border: none;
         }
 
         .nav-tabs .nav-link.active {
-            color: var(--link-color);
+            color: rgb(0, 221, 255);
             background: transparent;
             border-bottom: 2px solid var(--link-color);
         }
@@ -228,6 +228,10 @@
             color: var(--text-primary);
         }
 
+        .forgot-password-link {
+            color: rgb(0, 221, 255);
+        }
+
         .social-auth-section {
             margin-top: 2rem;
             padding-top: 1rem;
@@ -242,7 +246,7 @@
         .google-btn {
             width: 100%;
             height: 42px;
-            background-color: var(--content-bg);
+            background-color: rgba(255, 255, 255, 0.21);
             border-radius: 2px;
             box-shadow: 0 3px 4px 0 rgba(0,0,0,.25);
             display: flex;

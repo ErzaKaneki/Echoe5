@@ -26,6 +26,7 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0)),
     path('social-auth/', include('social_django.urls', namespace='social')),
+    path('api/v1/', include('blog.api.v1.urls')),
 ]
 
 if settings.DEBUG:

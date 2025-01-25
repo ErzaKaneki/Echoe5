@@ -19,9 +19,12 @@ from users.rate_limiting import login_rate_limit
 from django.utils.decorators import method_decorator
 from django.urls import path, include
 from django.conf import settings
-import sys
-from django.conf.urls.static import static
 from users import views as user_views
+from .jwt_views import (
+    CustomTokenObtainPairView,
+    CustomTokenRefreshView,
+    LogoutView
+)
 
 
 class RateLimitedLoginView(auth_views.LoginView):
@@ -54,3 +57,11 @@ urlpatterns = [
     path('verify-email/<str:uidb64>/<str:token>/', user_views.verify_email, name='verify_email'),
     path('email-verification-sent/', user_views.email_verification_sent, name='email_verification_sent'),
 ]
+
+jwt_patterns = [
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/logout/', LogoutView.as_view(), name='token_logout'),
+]
+
+urlpatterns += jwt_patterns

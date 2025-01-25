@@ -1,16 +1,16 @@
 [data-theme="light"] {
-    --content-bg: rgb(29, 27, 54);
-    --text-primary: #000000;
-    --text-secondary: #222222;
+    --content-bg: rgba(181, 181, 181, 0.343);
+    --text-primary: #00e1ff;
+    --text-secondary: #5ccde6;
     --border-color: #e0e0e0;
-    --link-color: #000000;
-    --nav-bg: rgba(52, 112, 163, 0.3);
-    --heading-color: #444444;
+    --link-color: #29a2ce;
+    --nav-bg: rgba(13, 71, 80, 0.323);
+    --heading-color: #00f7ff;
     --hover-color: #428bca;
 }
 
 [data-theme="dark"] {
-    --content-bg: rgba(18, 18, 18, 0.1);
+    --content-bg: rgba(122, 116, 116, 0.1);
     --text-primary: #e0e0e0;
     --text-secondary: #b0b0b0;
     --border-color: #fefefe;
@@ -125,7 +125,7 @@ label {
 }
 
 [data-theme="light"] .article-metadata a {
-    color: #0056b3;
+    color: #00ffe1;
 }
 
 [data-theme="light"] input[type="file"]::file-selector-button {

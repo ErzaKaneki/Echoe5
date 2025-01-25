@@ -1,46 +1,51 @@
 # Create your tests here.
 
-from django.urls import reverse
-from django.test import TestCase, Client, override_settings
-from django.urls import reverse
-from social_django.models import UserSocialAuth
-from unittest.mock import patch
+from django.test import TestCase
+from django.contrib.auth.models import User
+from rest_framework.test import APIClient
+from rest_framework import status
+import json
 
-@override_settings(
-    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY='test_key',
-    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET='test_secret'
-)
-
-class SocialAuthTests(TestCase):
+class APIAuthTests(TestCase):
     def setUp(self):
-        self.client = Client()
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123!'
+        )
+        self.login_url = '/api/v1/auth/login/'
+        self.post_url = '/api/v1/posts/'
 
-    def test_google_login_url(self):
-        response = self.client.get(reverse('social:begin', args=['google-oauth2']))
-        self.assertEqual(response.status_code, 302)  # Should redirect to Google
-        
-    @patch('social_core.backends.google.GoogleOAuth2.do_auth')
-    def test_google_auth_complete(self, mock_do_auth):
-        # Mock successful authentication
-        mock_do_auth.return_value = {
-            'email': 'test@example.com',
+    def test_login_success(self):
+        response = self.client.post(self.login_url, {
             'username': 'testuser',
-            'first_name': 'Test',
-            'last_name': 'User'
-        }
+            'password': 'testpass123!'
+        }, format='json')
         
-        response = self.client.get(reverse('social:complete', args=['google-oauth2']))
-        self.assertEqual(response.status_code, 302)  # Should redirect to success URL
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+
+    def test_login_invalid_credentials(self):
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'wrongpass'
+        }, format='json')
         
-    def test_social_auth_failure(self):
-        response = self.client.get(reverse('social:complete', args=['google-oauth2']))
-        self.assertEqual(response.status_code, 302)  # Should redirect to failure URL
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-class LandingPageTests(TestCase):
-    def setUp(self):
-        self.client = Client()
-
-    def test_landing_page_load(self):
-        response = self.client.get('/')  # Test by path instead of reverse
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'blog/landing_page.html')
+    def test_protected_endpoint_access(self):
+        # Login first
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'testpass123!'
+        }, format='json')
+        
+        # Set token in header
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {response.data['access']}"
+        )
+        
+        # Try accessing protected endpoint
+        response = self.client.get(self.post_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
