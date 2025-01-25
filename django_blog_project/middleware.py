@@ -3,6 +3,36 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+class CORSMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # Development settings
+        if settings.DEBUG:
+            response["Access-Control-Allow-Credentials"] = "true"
+            response["Access-Control-Allow-Origin"] = request.headers.get("Origin", "")
+            response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-CSRFToken"
+            response["Access-Control-Max-Age"] = "3600"
+        else:
+            # Production settings
+            origin = request.headers.get("Origin", "")
+            allowed_origins = ["https://echoe5.com", "https://www.echoe5.com"]
+            
+            if origin in allowed_origins:
+                response["Access-Control-Allow-Credentials"] = "true"
+                response["Access-Control-Allow-Origin"] = origin
+                response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-CSRFToken"
+                response["Access-Control-Max-Age"] = "3600"
+                
+                logger.info(f"CORS headers set for origin: {origin}")
+
+        return response
+
 class SecurityHeadersMiddleware:
     """Enhanced security headers middleware that handles both general and API security"""
     

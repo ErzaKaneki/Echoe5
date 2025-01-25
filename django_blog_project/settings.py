@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap4',
     'crispy_forms',
     'storages',
+    'corsheaders',
     'django_extensions',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -96,10 +97,24 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'user': '100/day',
     },
-    'EXCEPTION_HANDLER': 'blog.api.exception_handlers.custom_exception_handler'
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'blog.api.exception_handlers.custom_exception_handler',
 }
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django_blog_project.middleware.CORSMiddleware',
     'django_blog_project.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -199,9 +214,37 @@ if IS_DEVELOPMENT:
     # Social Auth settings
     SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
     
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_HEADERS = [
+        'accept',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
+    ]
+    
     # Development Installed Apps
     INSTALLED_APPS += [
         'management.apps.ManagementConfig',
+    ]
+    
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_HEADERS = [
+        'accept',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
     ]
     
     # Development logging
@@ -271,10 +314,23 @@ else:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Strict'
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_SAMESITE = 'Strict'
     
     # Email verification toggle for production
     REQUIRE_EMAIL_VERIFICATION = True
+    
+    # Production CORS settings
+    CORS_ALLOWED_ORIGINS = [
+        'https://echoe5.com',
+        'https://www.echoe5.com',
+    ]
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+    CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
     
     # Production database
     DATABASES = {
@@ -287,6 +343,12 @@ else:
             'PORT': env('DB_PORT', default='5432'),
         }
     }
+    
+    CORS_ALLOWED_ORIGINS = [
+        'https://echoe5.com',
+        'https://www.echoe5.com',
+    ]
+    CORS_ALLOW_CREDENTIALS = True
 
     # Production email settings
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

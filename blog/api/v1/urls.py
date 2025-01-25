@@ -1,14 +1,17 @@
 from django.urls import path
 from . import views
-from .auth import LoginAPIView
-from rest_framework.routers import DefaultRouter
-
-router = DefaultRouter()
-router.register(r'posts', views.PostViewSet)
+from .auth import TokenAuthenticationAPI
 
 urlpatterns = [
-    path('auth/login/', LoginAPIView.as_view(), name='api-login'),
-    path('posts/', views.PostViewSet.as_view({'get': 'list', 'post': 'create'}), name='post-list'),
+    # Authentication endpoint
+    path('auth/token/', TokenAuthenticationAPI.as_view(), name='api-token-auth'),
+    
+    # Posts endpoints
+    path('posts/', views.PostViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    }), name='post-list'),
+    
     path('posts/<int:pk>/', views.PostViewSet.as_view({
         'get': 'retrieve',
         'put': 'update',

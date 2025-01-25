@@ -9,13 +9,18 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class LoginAPIView(APIView):
+class TokenAuthenticationAPI(APIView):
     permission_classes = [AllowAny]
-
+    
     def post(self, request):
         try:
             username = request.data.get('username')
             password = request.data.get('password')
+
+            if not username or not password:
+                return Response({
+                    'error': 'Both username and password are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             user = authenticate(username=username, password=password)
             if not user:
@@ -24,17 +29,17 @@ class LoginAPIView(APIView):
                     'error': 'Invalid credentials'
                 }, status=status.HTTP_401_UNAUTHORIZED)
 
+            # Generate tokens for authenticated user
             refresh = RefreshToken.for_user(user)
-            
-            # Generate tokens
             tokens = {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }
 
+            # Create response with tokens
             response = Response(tokens, status=status.HTTP_200_OK)
             
-            # Set cookie in production
+            # In production, set JWT as HttpOnly cookie
             if not settings.DEBUG:
                 response.set_cookie(
                     'access_token',
@@ -44,12 +49,13 @@ class LoginAPIView(APIView):
                     samesite='Strict',
                     max_age=3600  # 1 hour
                 )
-
-            logger.info(f"Successful API login for user: {username}")
+            
+            logger.info(f"User {username} successfully authenticated via API")
             return response
 
         except Exception as e:
-            logger.error(f"API login error: {str(e)}")
+            logger.error(f"API authentication error: {str(e)}")
             return Response({
-                'error': 'Authentication failed'
+                'error': 'Authentication failed',
+                'detail': str(e) if settings.DEBUG else 'Internal server error'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
