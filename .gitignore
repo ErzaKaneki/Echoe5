@@ -20,6 +20,7 @@ management/
 .env.dev
 GoogleOauth.json
 GoogleOauthDev.json
+test_api.py
 
 # Database files
 *.sqlite3
