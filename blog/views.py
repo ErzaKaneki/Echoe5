@@ -14,8 +14,10 @@ from django.utils.decorators import method_decorator
 from users.rate_limiting import post_creation_rate_limit
 
 def landing_page(request):
+    """Handle landing page access"""
     if request.user.is_authenticated:
         return redirect('blog-home')
+    
     return render(request, 'blog/landing_page.html', {
         'title': 'Welcome',
         'next': request.GET.get('next', '/')

@@ -32,10 +32,13 @@ media/
 staticfiles/
 
 # Log files
+monitoring_logs.json
 *.log
 logs/
 
 # Backup files
+backup.bat
+monitor.bat
 *.bak
 *.backup
 *.sql

@@ -10,6 +10,10 @@ import environ
 from storages.backends.s3boto3 import S3Boto3Storage
 import boto3
 import logging
+import django
+
+# Django version
+DJANGO_VERSION = django.get_version()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -120,9 +124,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'users.middleware.AuthenticationMiddleware',
+    'users.middleware.RateLimitMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'users.middleware.RateLimitMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
@@ -193,7 +198,16 @@ SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ['echoe5.com', 'www.echoe5.com', 'localhost
 SOCIAL_AUTH_SANITIZE_REDIRECTS = True
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = not IS_DEVELOPMENT
 
-
+ # Apache development settings
+APACHE_DEV_CONFIG = {
+    'server_name': 'localhost',
+    'server_admin': 'your-email@example.com',
+    'document_root': str(BASE_DIR),
+    'wsgi_path': str(BASE_DIR / 'django_blog_project' / 'wsgi.py'),
+    'python_path': str(BASE_DIR),
+    'venv_path': sys.prefix,
+    'log_dir': str(BASE_DIR / 'logs')
+}
 
 # Wsgi
 WSGI_APPLICATION = 'django_blog_project.wsgi.application'
@@ -421,7 +435,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Login settings
 LOGIN_REDIRECT_URL = 'blog-home'
-LOGIN_URL = 'login'
+LOGIN_URL = 'landing_page'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
