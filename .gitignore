@@ -39,6 +39,7 @@ logs/
 # Backup files
 backup.bat
 monitor.bat
+*.bat
 *.bak
 *.backup
 *.sql
